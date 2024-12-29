@@ -202,7 +202,7 @@ var gemtextPage = template.Must(template.
 </article>
 <details>
 	<summary>
-		Proxied content from <a href="{{.URL.String | safeURL}}">{{.URL.String}}</a>
+		Proxied content from <a href="{{.LudverseURL.String | safeURL}}">{{.LudverseURL.String}}</a>
 		{{if .External}}
 		(external content)
 		{{end}}
@@ -210,7 +210,7 @@ var gemtextPage = template.Must(template.
 	<p>Gemini request details:
 	<dl>
 		<dt>Original URL</dt>
-		<dd><a href="{{.URL.String | safeURL}}">{{.URL.String}}</a></dd>
+		<dd><a href="{{.LudverseURL.String | safeURL}}">{{.LudverseURL.String}}</a></dd>
 		<dt>Status code</dt>
 		<dd>{{.Resp.Status}}</dd>
 		<dt>Meta</dt>
@@ -378,6 +378,7 @@ type GemtextContext struct {
 	Lang        string
 	URL         *url.URL
 	Root        *url.URL
+	LudverseURL *url.URL
 }
 
 type InputContext struct {
@@ -410,8 +411,8 @@ func createAnchor(heading string) string {
 }
 
 func proxyGemini(req gemini.Request, external bool, root *url.URL,
-	w http.ResponseWriter, r *http.Request, css string, externalCSS bool) {
-
+	w http.ResponseWriter, r *http.Request, css string, externalCSS bool,
+) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
@@ -504,6 +505,11 @@ func proxyGemini(req gemini.Request, external bool, root *url.URL,
 
 	lang := params["lang"]
 
+	ludverse_url := *req.URL
+	if !external {
+		ludverse_url.Host = "ludver.se"
+	}
+
 	w.Header().Add("Content-Type", "text/html")
 	gemctx := &GemtextContext{
 		CSS:         css,
@@ -514,6 +520,7 @@ func proxyGemini(req gemini.Request, external bool, root *url.URL,
 		Lang:        lang,
 		URL:         req.URL,
 		Root:        root,
+		LudverseURL: &ludverse_url,
 	}
 
 	var title bool
