@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode"
 
-	"git.sr.ht/~adnano/go-gemini"
+	"git.sr.ht/~sotirisp/go-gemini"
 	"git.sr.ht/~sircmpwn/getopt"
 )
 
