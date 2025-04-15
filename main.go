@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"html/template"
 	"io"
@@ -15,8 +16,8 @@ import (
 	"time"
 	"unicode"
 
-	"git.sr.ht/~sotirisp/go-gemini"
 	"git.sr.ht/~sircmpwn/getopt"
+	"git.sr.ht/~sotirisp/go-gemini"
 )
 
 var gemtextPage = template.Must(template.
@@ -416,7 +417,12 @@ func proxyGemini(req gemini.Request, external bool, root *url.URL,
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	client := gemini.Client{}
+	client := gemini.Client{
+		TrustCertificate: func(hostname string, cert *x509.Certificate) error {
+			// why? in my Dockerfile in gemcapsule-proxy, i am connecting to the server using the hostname gemcapsule-proxy, so when validating that hostname against the hostname ludver.se of the certificate, this kinda goes urridurr, cave man brain, this is not the same and thus i will not allow it. this kinda short circuits and circumvents that.
+			return nil // blindly always trust the certs
+		},
+	}
 	resp, err := client.Do(ctx, &req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
